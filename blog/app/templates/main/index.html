@@ -1,0 +1,56 @@
+{% extends 'common/base.html' %}
+
+{% block title %}博客首页{% endblock %}
+
+{% from 'common/macro.html' import show_pagination %}
+
+{% block page_content %}
+    {{ quick_form(form) }}
+    {% for p in posts %}
+        <div class="media">
+            <div class="media-left">
+                <a href="#">
+                    <img class="media-object" width="64" src="{{ url_for('static', filename='upload/'+p.user.icon) }}" alt="icon">
+                </a>
+            </div>
+            <div class="media-body">
+                <div style="float: right;">{{ moment(p.timestamp).fromNow() }}</div>
+                <h4 class="media-heading">{{ p.user.username }}</h4>
+                {{ p.content }}
+                <div class="collect" url="{{ url_for('posts.collect', pid=p.id) }}" style="cursor: pointer;">
+                    {%- if current_user.is_authenticated and current_user.is_favorite(pid=p.id) -%}
+                        取消收藏
+                    {%- else -%}
+                        收藏
+                    {%- endif -%}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    {# 展示分页导航条 #}
+    {{ show_pagination(pagination, 'main.index', uid=3) }}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+
+        $(function () {
+            $('.collect').click(function () {
+            {% if current_user.is_authenticated %}
+                // 回调方法中的this没有意义
+                _this = this
+                // 发送ajax请求
+                $.get($(_this).attr('url'), function (data) {
+                    {#alert(data.status)#}
+                    $(_this).text(data.status)
+                })
+            {% else %}
+                // 没有登录，跳转到登录页面
+                location.href = "{{ url_for('user.login') }}"
+            {% endif %}
+            })
+        })
+
+    </script>
+{% endblock %}
